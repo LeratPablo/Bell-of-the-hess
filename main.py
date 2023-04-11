@@ -31,7 +31,7 @@ def game():
                 pygame.quit()
                 sys.exit()
 
-        screen.blit(player.scaled_image, player.pos)
+        screen.blit(player.image, player.pos)
 
         player.update()
         pygame.display.update()

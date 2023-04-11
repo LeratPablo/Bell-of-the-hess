@@ -5,7 +5,7 @@ from SETTINGS import *
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        # self.image = pygame.image.load("assets\Bell.png").convert_alpha()
+        self.image = pygame.image.load("assets\Bell.png").convert_alpha()
         self.scaled_image = pygame.transform.scale(self.image, (64, 64))
         self.pos = pygame.math.Vector2(PLAYER_START_X, PLAYER_START_Y)
 
