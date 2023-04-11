@@ -1,73 +1,61 @@
-import pygame, sys, math
-from pygame.locals import *
+import pygame, sys
 from SETTINGS import *
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.image.load("assets\Bell.png").convert_alpha()
-        self.scaled_image = pygame.transform.scale(self.image, (64, 64))
-        self.pos = pygame.math.Vector2(PLAYER_START_X, PLAYER_START_Y)
-
-        self.speed = PLAYER_SPEED
-
-        # Idle
-        player_idle_0 = pygame.image.load('assets/animations/player/idle/idle_0.png').convert_alpha()
-        player_idle_1 = pygame.image.load('assets/animations/player/idle/idle_1.png').convert_alpha()
-        player_idle_2 = pygame.image.load('assets/animations/player/idle/idle_2.png').convert_alpha()
-        self.player_idle_frames = [player_idle_0, player_idle_1, player_idle_2]
-        # Walk down
-        player_walkdown_0 = pygame.image.load('assets/animations/player/walkdown/walkdown_0.png').convert_alpha()
-        player_walkdown_1 = pygame.image.load('assets/animations/player/walkdown/walkdown_1.png').convert_alpha()
-        player_walkdown_2 = pygame.image.load('assets/animations/player/walkdown/walkdown_2.png').convert_alpha()
-        player_walkdown_3 = pygame.image.load('assets/animations/player/walkdown/walkdown_3.png').convert_alpha()
-        self.player_walkdown_frames = [player_walkdown_0, player_walkdown_1, player_walkdown_2, player_walkdown_3]
-
-    def user_input(self):
-        self.velX = 0
-        self.velY = 0
-
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_UP]:
-            self.velY = -self.speed
-        if keys[pygame.K_DOWN]:
-            self.velY = self.speed
-        if keys[pygame.K_LEFT]:
-            self.velX = -self.speed
-        if keys[pygame.K_RIGHT]:
-            self.velX = self.speed
-
-        if self.velX != 0 and self.velY != 0:
-            self.velX /= math.sqrt(2)
-            self.velY /= math.sqrt(2)
-
-    def animation_controller(self):
-        current_frame = 0
-        frame = None
-        if keys[pygame.K_UP]:
-            pass
-        elif keys[pygame.K_DOWN]:
-            max_frame = len(self.player_walkdown_frames)
-            frame = self.player_walkdown_frames[current_frame]
-        elif keys[pygame.K_LEFT]:
-            pass
-        elif keys[pygame.K_RIGHT]:
-            pass
-        else:
-            max_frame = len(self.player_idle_frames)
-            
-        
-        if current_frame >= max_frame:
-            current_frame = 0
-        else:
-            current_frame +=1
-        
-        return frame
     
-    def move(self):
-        self.pos += pygame.math.Vector2(self.velX, self.velY)
+    def __init__(self, pos, groups, obstacle_sprites):
+        super().__init__(groups)
+        self.image = pygame.image.load('assets/Bell.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft= pos)
+        
+        self.direction = pygame.math.Vector2()
+        self.speed = 5
+        
+        self.obstacle_sprites = obstacle_sprites
+        
+    def input(self):
+        keys = pygame.key.get_pressed()
+        
+        if keys[pygame.K_UP]:
+            self.direction.y = -1
+        elif keys[pygame.K_DOWN]:
+            self.direction.y = 1
+        else:
+            self.direction.y = 0
+            
+        if keys[pygame.K_RIGHT]:
+            self.direction.x = 1
+        elif keys[pygame.K_LEFT]:
+            self.direction.x = -1
+        else:
+            self.direction.x = 0
+            
+    def move(self, speed):
+        if self.direction.magnitude()!= 0:
+            self.direction = self.direction.normalize()
+            
+        self.rect.x += self.direction.x * speed
+        self.collision('horizontal')
+        self.rect.y += self.direction.y * speed
+        self.collision('vertical')
+        # self.rect.center += self.direction * speed
+    
+    def collision(self, direction):
+        if direction == 'horizontal':
+            for sprite in self.obstacle_sprites:
+                if sprite.rect.colliderect(self.rect):
+                    if self.direction.x > 0:
+                        self.rect.right = sprite.rect.left
+                    if self.direction.x < 0:
+                        self.rect.left = sprite.rect.right
+        if direction == 'vertical':
+            for sprite in self.obstacle_sprites:
+                if sprite.rect.colliderect(self.rect):
+                    if self.direction.y > 0:
+                        self.rect.bottom = sprite.rect.top
+                    if self.direction.y < 0:
+                        self.rect.top = sprite.rect.bottom
     
     def update(self):
-        self.user_input()
-        self.move()
+        self.input()
+        self.move(self.speed)
