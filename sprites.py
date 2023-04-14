@@ -240,34 +240,53 @@ class Enemy(pygame.sprite.Sprite):
         self.animate()
 
         self.rect.x += self.x_change
+        self.collision('x')
         self.rect.y += self.y_change
+        self.collision('y')
 
         self.x_change = 0
         self.y_change = 0
-        
-    # def movement(self):
-    #     if self.facing == 'left':
-    #         self.x_change -= IDLE_ENEMY_SPEED
-    #         self.movement_loop -= 1
-    #         if self.movement_loop <= -self.max_travel:
-    #             self.facing = 'right'
-
-    #     if self.facing == 'right':
-    #         self.x_change += IDLE_ENEMY_SPEED
-    #         self.movement_loop += 1
-    #         if self.movement_loop >= self.max_travel:
-    #             self.facing = 'left'
+    
+    def collision(self, direction):
+        if direction == 'x':
+            hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
+            if hits:
+                if self.x_change > 0:
+                    self.rect.x = hits[0].rect.left - self.rect.width
+                if self.x_change < 0:
+                    self.rect.x = hits[0].rect.right
+        if direction == 'y':
+            hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
+            if hits:
+                if self.y_change > 0:
+                    self.rect.y = hits[0].rect.top - self.rect.height
+                if self.y_change < 0:
+                    self.rect.y = hits[0].rect.bottom
 
     def movement(self):
-        player_x, player_y = self.game.player.rect.center
-        dx, dy = player_x - self.rect.centerx, player_y - self.rect.centery
-        distance = math.hypot(dx, dy)
-        
-        if distance < CHASE_RADIUS:
-            self.facing = 'chase'
-            self.x_change = CHASE_ENEMY_SPEED * dx / distance
-            self.y_change = CHASE_ENEMY_SPEED * dy / distance
+        for p in self.game.player:
+            player_pos = p.rect.center
+
+        enemy_pos = self.rect.center
+        distance = math.sqrt((player_pos[0] - enemy_pos[0])**2 + (player_pos[1] - enemy_pos[1])**2)
+
+        if distance <= CHASE_RADIUS:
+            if player_pos[0] > enemy_pos[0]:
+                self.x_change += CHASE_ENEMY_SPEED
+                self.facing = 'right'
+            elif player_pos[0] < enemy_pos[0]:
+                self.x_change -= CHASE_ENEMY_SPEED
+                self.facing = 'left'
+
+            if player_pos[1] > enemy_pos[1]:
+                self.y_change += CHASE_ENEMY_SPEED
+                self.facing = 'down'
+            elif player_pos[1] < enemy_pos[1]:
+                self.y_change -= CHASE_ENEMY_SPEED
+                self.facing = 'up'
         else:
+            if self.facing == 'up' or self.facing == 'down':
+                self.facing = random.choice(['left', 'right'])
             if self.facing == 'left':
                 self.x_change -= IDLE_ENEMY_SPEED
                 self.movement_loop -= 1
@@ -279,10 +298,6 @@ class Enemy(pygame.sprite.Sprite):
                 self.movement_loop += 1
                 if self.movement_loop >= self.max_travel:
                     self.facing = 'left'
-
-            if self.facing == 'chase':
-                self.facing = random.choice(['left', 'right'])
-
 
     def animate(self):
         down_animation = [
@@ -302,6 +317,18 @@ class Enemy(pygame.sprite.Sprite):
             self.game.enemy_spritesheet.get_sprite(96,96, self.width, self.height)
         ]
         
+        if self.facing == 'left':
+            if self.animation_loop >= 1:
+                self.animation_loop = 0
+            self.image = left_animation[math.floor(self.animation_loop)]
+            self.animation_loop += 0.1
+
+        if self.facing == 'right':
+            if self.animation_loop >= 1:
+                self.animation_loop = 0
+            self.image = right_animation[math.floor(self.animation_loop)]
+            self.animation_loop += 0.1
+
         if self.facing == 'down':
             if self.animation_loop >= 1:
                 self.animation_loop = 0
@@ -314,18 +341,7 @@ class Enemy(pygame.sprite.Sprite):
             self.image = up_animation[math.floor(self.animation_loop)]
             self.animation_loop += 0.1
 
-        if self.facing == 'left':
-            if self.animation_loop >= 1:
-                self.animation_loop = 0
-            self.image = left_animation[math.floor(self.animation_loop)]
-            self.animation_loop += 0.1
 
-        if self.facing == 'right':
-            if self.animation_loop >= 1:
-                self.animation_loop = 0
-            self.image = right_animation[math.floor(self.animation_loop)]
-            self.animation_loop += 0.1
-            
 class Button:
     def __init__(self, x,y, width, height, fg, bg, content, fontsize):
         self.font = pygame.font.Font(None, fontsize)
