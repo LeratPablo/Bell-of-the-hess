@@ -12,8 +12,10 @@ class Game:
         self.running = True
 
         self.character_spritesheet = Spritesheet('assets/player_spritesheet.png')
-        self.terrain_spritesheet = Spritesheet('assets/block_spritsheet.png')
         self.enemy_spritesheet = Spritesheet('assets/ennemy_spritesheet.png')
+        self.teacher_spritesheet = Spritesheet('assets/teacher_spritesheet.png')
+        self.sad_child_spritesheet = Spritesheet('assets/sadchild_spritesheet.png')
+        self.terrain_spritesheet = Spritesheet('assets/block_spritsheet.png')
 
     def createTilemap(self):
         for i, row in enumerate(WORLD_MAP):
@@ -25,6 +27,12 @@ class Game:
                     Player(self, j, i)
                 if col == 'E':
                     Enemy(self, j, i)
+                if col == 'T':
+                    Teacher(self, j, i)
+                if col == 'S':
+                    SadChild (self, j, i)
+                if col == 'F':
+                    Sand(self, j, i)
 
     def new(self):
         # New game
@@ -36,6 +44,8 @@ class Game:
         self.blocks = pygame.sprite.LayeredUpdates()
         self.enemies = pygame.sprite.LayeredUpdates()
         self.attacks = pygame.sprite.LayeredUpdates()
+        self.teacher = pygame.sprite.LayeredUpdates()
+        self.sad_child = pygame.sprite.LayeredUpdates()
 
         self.createTilemap()
 
@@ -84,7 +94,7 @@ class Game:
         title = self.font.render('Bell of the wild', True, BLACK)
         title_rect = title.get_rect(x=1, y=1)
         play_button = Button(10, 50, 100, 50, WHITE, BLACK, 'Play', 32)
-        
+
         while intro:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -104,7 +114,7 @@ class Game:
             self.clock.tick(FPS)
 
             pygame.display.update()
-    
+
 g = Game()
 g.intro_screen()
 g.new()
