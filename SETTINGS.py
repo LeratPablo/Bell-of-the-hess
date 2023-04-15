@@ -1,6 +1,7 @@
 WIN_WIDTH = 1280
 WIN_HEIGHT = 704
 
+PARTICLE_LAYER = 7
 PLAYER_LAYER = 6
 SAD_CHILD = 5
 ENEMY_LAYER = 4
@@ -24,22 +25,22 @@ CHASE_ENEMY_SPEED = 3
 SLOWED_DOWN_ENEMY_SPEED = 1
 
 CHASE_RADIUS = 200
-INTERACT_RADIUS = 250
+INTERACT_RADIUS = 100
 
 WORLD_MAP = [
-' WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW ',
+'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW',
 'W                  W                   W',
 'W P           S    W               T   W',
 'W                  W                   W',
-'WWWWWWWWWWWWWW     W    S              W',
-'W             W    W                   W',
-'W             W    W     WWWWWW        W',
+'WWWWWWWWWWWWWWW    W    S              W',
+'W             W    W                E  W',
+'W        S    W    W    WWWWWWWW       W',
 'W             W    W    W      W       W',
-'W             W    W    W      W       W',
+'W             W    W    W  S   W       W',
 'W             W         W      W       W',
 'W             W         W      W       W',
-'WDWWWWWWWWWWWW          W      W       W',
-'W                        CCCCCC        W',
+'WDWWWWWWWWWWWWW         W      W       W',
+'W                       WCCCCCCW       W',
 'W                                      W',
 'W                                      W',
 'W    W                                 W',
@@ -48,5 +49,5 @@ WORLD_MAP = [
 'W    W                             FFFFW',
 'W E  W                             FFFFW',
 'W    W                             FFFFW',
-' WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW '
+'WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW'
 ]

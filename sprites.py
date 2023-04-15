@@ -251,7 +251,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.timer = 0
         self.slow_timer = 0
-        self.cooldown = 4
+        self.cooldown = 10
         self.on_cooldown = False
         self.state = 'idle'
         
@@ -278,7 +278,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.x_change = 0
         self.y_change = 0
-    
+
     def collision(self, direction):
         if direction == 'x':
             hits = pygame.sprite.spritecollide(self, self.game.blocks, False)
@@ -316,15 +316,11 @@ class Enemy(pygame.sprite.Sprite):
             if self.timer >= self.cooldown:
                 self.timer = 0
                 self.on_cooldown = False
-                
-        if not self.on_cooldown:
-            print('pret')
-        else:
-            print("pas pret")
 
     def to_sandbox(self, x, y):
-        self.kill()
+        EnemyVanish(self.game, self.rect.centerx, self.rect.centery)
         SadChild(self.game, x, y)
+        self.kill()
 
     def movement(self):
         if self.angry:
@@ -367,7 +363,6 @@ class Enemy(pygame.sprite.Sprite):
                         self.y_change -= CHASE_ENEMY_SPEED
                     self.facing = 'up'
             else:
-                # self.state = 'idle'
                 if self.facing == 'up' or self.facing == 'down':
                     self.facing = random.choice(['left', 'right'])
                 if self.facing == 'left':
@@ -482,9 +477,6 @@ class Teacher(pygame.sprite.Sprite):
     def update(self):
         self.animate()
 
-    # def enemy_collide(self):
-    #     hits = 
-
     def animate(self):
         idle_animation = [
             self.game.teacher_spritesheet.get_sprite(0, 0, self.width, self.height),
@@ -526,6 +518,9 @@ class SadChild(pygame.sprite.Sprite):
         self.animate()
         self.player_interaction()
         
+        if self.state == 'happy':
+            self.game.sad_child.remove(self)
+
     def player_interaction(self):
         for p in self.game.player:
                 player_pos = p.rect.center
@@ -533,7 +528,10 @@ class SadChild(pygame.sprite.Sprite):
         distance = math.sqrt((player_pos[0] - sad_child_pos[0])**2 + (player_pos[1] - sad_child_pos[1])**2)
         keys = pygame.key.get_pressed()
         
-        if distance < INTERACT_RADIUS and keys[pygame.K_SPACE]:
+        for i in self.game.player_interaction:
+                cd = i.on_cooldown
+
+        if distance < INTERACT_RADIUS and keys[pygame.K_SPACE] and not cd:
             self.state = 'happy'
 
     def animate(self):
@@ -557,3 +555,134 @@ class SadChild(pygame.sprite.Sprite):
             self.image = happy_animation[math.floor(self.animation_loop)]
             self.animation_loop += 0.1
 
+class PlayerInteraction(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        self.game = game
+        self._layer = PARTICLE_LAYER
+        self.groups = self.game.all_sprites, self.game.player_interaction
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILES_SIZE
+        self.y = y * TILES_SIZE
+        self.width = TILES_SIZE
+        self.height = TILES_SIZE
+
+        self.animation_loop = 0
+        self.state = 'invisible'
+        self.on_cooldown = False
+        self.timer = 0
+        self.cooldown = 4
+
+        self.image = self.game.player_interaction_spritesheet.get_sprite(0, 0, self.width, self.height)
+        self.image.set_colorkey(BLACK)
+        
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        for p in self.game.player:
+                player_pos = p.rect.center
+
+        if self.game.playing:
+            self.rect.centerx = player_pos[0] - 16
+            self.rect.centery = player_pos[1] - 16
+
+        self.input()
+        if self.state == 'visible':
+            self.animate()
+
+    def input(self):
+        keys = pygame.key.get_pressed()
+        if self.on_cooldown:
+            self.timer += (1/60)/0.9
+            if self.timer >= self.cooldown:
+                self.timer = 0
+                self.on_cooldown = False
+
+        if keys[pygame.K_SPACE] and not self.on_cooldown:
+            self.state = 'visible'
+            self.on_cooldown = True
+
+    def animate(self):
+        interact_animation = [
+            self.game.player_interaction_spritesheet.get_sprite(0, 0, self.width, self.height),
+            self.game.player_interaction_spritesheet.get_sprite(32,0, self.width, self.height),
+            self.game.player_interaction_spritesheet.get_sprite(64, 0, self.width, self.height),
+            self.game.player_interaction_spritesheet.get_sprite(96, 0, self.width, self.height),
+            self.game.player_interaction_spritesheet.get_sprite(128, 0, self.width, self.height),
+            self.game.player_interaction_spritesheet.get_sprite(160, 0, self.width, self.height),
+            self.game.player_interaction_spritesheet.get_sprite(196, 0, self.width, self.height)
+        ]
+
+        if self.state == 'visible':
+            if self.animation_loop >= 7:
+                self.animation_loop = 0
+                self.state = 'invisible'
+            new_image = pygame.transform.scale(interact_animation[math.floor(self.animation_loop)], (64, 64))
+            self.image = new_image
+            self.animation_loop += 0.15
+        else:
+            self.kill()
+
+class EnemyVanish(pygame.sprite.Sprite):
+    def __init__(self, game, x, y):
+        self.game = game
+        self._layer = PARTICLE_LAYER
+        self.groups = self.game.all_sprites, self.game.enemy_vanish
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.x = x * TILES_SIZE
+        self.y = y * TILES_SIZE
+        self.width = TILES_SIZE
+        self.height = TILES_SIZE
+
+        self.animation_loop = 0
+        self.state = 'visible'
+        self.on_cooldown = False
+        self.timer = 0
+        self.cooldown = 4
+
+        self.image = self.game.enemies_vanish.get_sprite(0, 0, self.width, self.height)
+        self.image.set_colorkey(BLACK)
+        
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def update(self):
+        self.rect.centerx = self.x - 16
+        self.rect.centery = self.y - 16
+
+        self.animate()
+        self.state = 'invisible'
+
+    def animate(self):
+        vanish_animation = [
+            self.game.enemies_vanish.get_sprite(0, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(32, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(64, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(96, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(128, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(160, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(196, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(282, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(260, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(292, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(324, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(356, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(388, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(420, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(452, 0, self.width, self.height),
+            self.game.enemies_vanish.get_sprite(484, 0, self.width, self.height)
+        ]
+
+        if self.state == 'visible':
+            if self.animation_loop >= 16:
+                self.animation_loop = 0
+                self.state = 'invisible'
+            new_image = pygame.transform.scale(vanish_animation[math.floor(self.animation_loop)], (64, 64))
+            self.image = new_image
+            self.animation_loop += 0.15
+        else:
+            self.kill()
